@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# hotspot – thin wrapper so Waybar / keybinds can call this script directly
+# without needing to know the project layout or activate the venv.
+#
+# Usage (in your waybar config.jsonc):
+#   "exec":           "/home/t_s/Hotspot_GUI/hotspot waybar",
+#   "on-click":       "/home/t_s/Hotspot_GUI/hotspot toggle",
+#   "on-click-right": "/home/t_s/Hotspot_GUI/hotspot gui",
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON="$SCRIPT_DIR/venv/bin/python"
+
+if [[ ! -x "$PYTHON" ]]; then
+    echo "Error: venv not found at $SCRIPT_DIR/venv" >&2
+    echo "Run: python -m venv venv && venv/bin/pip install -r requirements.txt" >&2
+    exit 1
+fi
+
+# Run as a module from the project root so relative imports work correctly.
+exec "$PYTHON" -m src "$@"

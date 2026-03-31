@@ -1,0 +1,41 @@
+## Waybar config.jsonc snippet
+##
+## Add "custom/hotspot-gui" to modules-right, then paste the module
+## definition below anywhere in the same file.
+
+"custom/hotspot-gui": {
+    "format": "{}",
+    "return-type": "json",
+    "exec": "/home/t_s/Hotspot_GUI/hotspot waybar",
+    "interval": 3,
+    "on-click": "/home/t_s/Hotspot_GUI/hotspot toggle",
+    "on-click-right": "/home/t_s/Hotspot_GUI/hotspot gui",
+    "tooltip": true
+}
+
+
+## Waybar style.css snippet
+
+#custom-hotspot-gui.active {
+    color: #a6e3a1; /* Active — green */
+}
+
+#custom-hotspot-gui.inactive {
+    color: #6c7086; /* Inactive — gray */
+}
+
+
+## Hyprland hyprland.conf snippet
+##
+## NOTE: Qt sets WM_CLASS to setApplicationName(), which is "HotspotGUI".
+##       Do NOT use "com.local.hotspotgui" — that class is never set.
+
+# Float and center the hotspot window
+windowrule = match:class ^HotspotGUI$, float on
+windowrule = match:class ^HotspotGUI$, center on
+
+# Fixed window size
+windowrule = match:class ^HotspotGUI$, size 420 500
+
+# Slight transparency (active + inactive opacity)
+windowrule = opacity 0.6, match:class ^HotspotGUI$
