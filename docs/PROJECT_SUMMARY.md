@@ -462,4 +462,4 @@ python -m src stop
 
 ---
 
-*Last updated: March 2026 (v1.3 — themed warning dialogs, routing protection, external termination detection)*
+*Last updated: March 2026 (v1.6 — updated UI, rewrote nm_dbus.py for Wi-Fi warning & hotspot disconnection, bug fixes)*
