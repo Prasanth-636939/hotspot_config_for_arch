@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Hotspot Manager
+Comment=Manage Wi-Fi Hotspots
+Exec=hotspot-gui gui
+Icon=network-wireless-hotspot
+Terminal=false
+Categories=Network;Utility;
+Keywords=wifi;hotspot;network;
