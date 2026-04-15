@@ -9,8 +9,8 @@ license=('GPL-3.0-or-later') # Update with your actual license
 depends=(
     'python'
     'python-pyqt6'
-    # sdbus and sdbus-networkmanager are usually packaged via pip, if not on AUR:
     'python-sdbus'
+    'python-sdbus-networkmanager-git'
 )
 makedepends=(
     'git'
