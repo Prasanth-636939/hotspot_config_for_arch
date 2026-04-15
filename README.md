@@ -96,6 +96,18 @@ Hotspot_GUI/
 
 ## 🚀 Installation
 
+### Arch User Repository (AUR)
+
+If you are on Arch Linux, the easiest way to install is via the AUR package `hotspot-gui-git`. Use an AUR helper like `yay` or `paru`:
+
+```bash
+yay -S hotspot-gui-git
+```
+
+This will automatically install all dependencies, the desktop entry, system package, and the CLI tool.
+
+### Manual Installation (Development)
+
 ```bash
 # Clone the repo
 git clone https://github.com/Prasanth-636939/hotspot_config_for_arch.git
@@ -114,21 +126,21 @@ pip install -r requirements.txt
 ### GUI
 
 ```bash
-# Launch the graphical interface
-python -m src gui
+# Launch from the terminal
+hotspot-gui gui
 
-# Or use the bash wrapper (auto-activates venv)
-./hotspot gui
+# Or use the symlink
+hotspot gui
 ```
 
 ### CLI
 
 ```bash
-python -m src toggle                              # Toggle hotspot on/off
-python -m src start --ssid MyNet --password s3cr3t # Start with custom credentials
-python -m src status                              # Show status + connected clients
-python -m src stop                                # Stop and cleanup
-python -m src waybar                              # Output Waybar JSON status
+hotspot toggle                              # Toggle hotspot on/off
+hotspot start --ssid MyNet --password s3cr3t # Start with custom credentials
+hotspot status                              # Show status + connected clients
+hotspot stop                                # Stop and cleanup
+hotspot waybar                              # Output Waybar JSON status
 ```
 
 ---
@@ -141,10 +153,10 @@ Add to your Waybar `config.jsonc`:
 "custom/hotspot-gui": {
     "format": "{}",
     "return-type": "json",
-    "exec": "/path/to/hotspot_config_for_arch/hotspot waybar",
+    "exec": "hotspot waybar",
     "interval": 3,
-    "on-click": "/path/to/hotspot_config_for_arch/hotspot toggle",
-    "on-click-right": "/path/to/hotspot_config_for_arch/hotspot gui",
+    "on-click": "hotspot toggle",
+    "on-click-right": "hotspot gui",
     "tooltip": true
 }
 ```
@@ -220,7 +232,7 @@ Pull requests and ideas are welcome. Feel free to fork and enhance the project.
 
 ## 📄 License
 
-MIT License
+GPL-3.0-or-later
 
 ---
 

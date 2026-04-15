@@ -8,6 +8,11 @@ dist/
 build/
 *.egg
 
+# Arch package build directories
+pkg/
+src/hotspot-gui/
+hotspot-gui-git-*.pkg.tar.zst
+
 # Virtual environment
 venv/
 .venv/
