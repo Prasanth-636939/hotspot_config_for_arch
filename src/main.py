@@ -69,9 +69,14 @@ def cli_start(ssid: str, password: str, interactive: bool = True):
     # because it is called by Waybar and keybinds.
     if interactive:
         wifi_ssid = dbus_ctrl.get_wifi_client_ssid()
-        if wifi_ssid:
-            print(f"⚠  Wi-Fi is currently connected to: '{wifi_ssid}'")
-            print("   Starting the hotspot will disconnect it (same adapter).")
+        wifi_on   = dbus_ctrl.is_wifi_radio_enabled()
+
+        if wifi_ssid or wifi_on:
+            if wifi_ssid:
+                print(f"⚠  Wi-Fi is currently active: '{wifi_ssid}'")
+            else:
+                print("⚠  Wi-Fi radio is currently ON.")
+            print("   Starting the hotspot will take control of the wireless adapter.")
             try:
                 answer = input("   Continue? [y/N] ").strip().lower()
             except (EOFError, KeyboardInterrupt):

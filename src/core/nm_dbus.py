@@ -53,9 +53,22 @@ class NMDBusController:
     def get_device_iface(self, dev_path: str) -> str:
         return NetworkDeviceGeneric(dev_path, self.bus).interface
 
+    def is_wifi_radio_enabled(self) -> bool:
+        """Return True if the Wi-Fi radio is enabled (turned ON)."""
+        try:
+            res = subprocess.run(
+                ["nmcli", "radio", "wifi"],
+                capture_output=True,
+                text=True,
+            )
+            return res.stdout.strip().lower() == "enabled"
+        except Exception:
+            return True # safe default
+
     def get_wifi_client_ssid(self) -> Optional[str]:
         """
-        Return the name of the active Wi-Fi *client* connection, or None.
+        Return the name of the active Wi-Fi *client* connection, or a
+        description of the state (e.g. 'connecting') if Wi-Fi is active.
 
         Uses `nmcli -t device` terse output.  In client mode NM reports
         the device STATE as "connected"; in hotspot/AP mode it reports
@@ -76,13 +89,17 @@ class NMDBusController:
                 if len(parts) < 3:
                     continue
                 dev_type, state, connection = parts
-                if dev_type == "wifi" and state == "connected":
-                    # Extra safety: exclude any profile we recognise as a hotspot
-                    if not connection.endswith(" Hotspot"):
+                if dev_type == "wifi":
+                    # If it's connected to an actual AP profile
+                    if state == "connected" and not connection.endswith(" Hotspot"):
                         return connection
+                    # If it's connecting / preparing / scanning / etc.
+                    if state in ("connecting", "preparing", "configuring", "need-auth"):
+                        return f"(in progress: {state})"
         except Exception:
             pass
         return None
+
 
     def is_hotspot_active(self, con_name: str) -> bool:
         """

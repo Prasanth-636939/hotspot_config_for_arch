@@ -1,4 +1,5 @@
 import os
+import time
 import json
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -200,6 +201,9 @@ class OrchestratorMainWindow(QMainWindow):
         self.active_conn_path: str       = ""
         self.profile_path:     str       = ""
         self._current_ssid:    str | None = None
+        # Grace period: skip the external-stop watchdog for 15 s after start
+        # so NM has time to register the hotspot as an active connection.
+        self._hotspot_start_time: float = 0.0
 
         self._sync_state()
 
@@ -315,19 +319,31 @@ class OrchestratorMainWindow(QMainWindow):
             self.status_label.setText("Status: SSID cannot be empty.")
             return
 
-        # ---- Feature 1: warn if Wi-Fi is already connected in client mode ----
+        # ---- Feature 1: warn if Wi-Fi is enabled in client mode ----
         # Both client mode and hotspot mode share the physical Wi-Fi adapter,
         # so starting the hotspot will forcibly disconnect any active Wi-Fi
-        # client session.  Give the user a chance to cancel.
+        # client session. Give the user a chance to cancel.
         wifi_ssid = self.dbus_ctrl.get_wifi_client_ssid()
-        if wifi_ssid:
+        wifi_on   = self.dbus_ctrl.is_wifi_radio_enabled()
+
+        if wifi_ssid or wifi_on:
+            msg_text = ""
+            if wifi_ssid:
+                msg_text = (
+                    f"<b>Wi-Fi is currently active:</b><br>"
+                    f"&nbsp;&nbsp;&nbsp;<i>{wifi_ssid}</i><br><br>"
+                    "Starting the hotspot will <b>disconnect Wi-Fi</b> because "
+                    "both share the same wireless adapter."
+                )
+            else:
+                msg_text = (
+                    "<b>Wi-Fi radio is currently ON.</b><br><br>"
+                    "Starting the hotspot will take control of the wireless adapter."
+                )
+
             reply = self._themed_warning(
-                "Wi-Fi Is Currently In Use",
-                f"<b>Wi-Fi is connected to:</b><br><br>"
-                f"&nbsp;&nbsp;&nbsp;<i>{wifi_ssid}</i><br><br>"
-                "Starting the hotspot will <b>disconnect Wi-Fi</b> because "
-                "both share the same wireless adapter.<br><br>"
-                "Do you want to continue?",
+                "Wi-Fi Connectivity Warning",
+                f"{msg_text}<br><br>Do you want to continue?",
             )
             if reply != QMessageBox.StandardButton.Yes:
                 return
@@ -356,6 +372,8 @@ class OrchestratorMainWindow(QMainWindow):
         self.profile_path     = profile_path
         self.active_conn_path = active_conn_path
         self._current_ssid    = self.ssid_input.text().strip()
+        # Record start time so the watchdog skips the first 15 seconds
+        self._hotspot_start_time = time.monotonic()
 
         self._persist_state(self._current_ssid, con_name, iface)
         self._sync_state()
@@ -417,13 +435,20 @@ class OrchestratorMainWindow(QMainWindow):
         # applet, nmcli, etc.), NM drops the hotspot AP connection to reclaim
         # the adapter.  The state file still says "active", but NM no longer
         # lists the connection as active.  Detect this mismatch and auto-clean.
-        if self._con_name and not self.dbus_ctrl.is_hotspot_active(self._con_name):
-            if os.path.exists(STATE_FILE):
-                os.remove(STATE_FILE)
-            self._sync_state()          # resets UI to Inactive
-            self.clients_list.clear()
-            self.status_label.setText("Status: Inactive  (stopped — Wi-Fi connected externally)")
-            return
+        #
+        # Grace period: skip this watchdog for 15 s after the hotspot is first
+        # started, because NM may not immediately register the new connection
+        # under its name in "nmcli connection show --active".
+        _grace_seconds = 15.0
+        _elapsed = time.monotonic() - self._hotspot_start_time
+        if self._con_name and _elapsed > _grace_seconds:
+            if not self.dbus_ctrl.is_hotspot_active(self._con_name):
+                if os.path.exists(STATE_FILE):
+                    os.remove(STATE_FILE)
+                self._sync_state()          # resets UI to Inactive
+                self.clients_list.clear()
+                self.status_label.setText("Status: Inactive  (stopped — Wi-Fi connected externally)")
+                return
         # ----------------------------------------------------------------------
 
         clients = self.stats.get_active_clients(self._iface or None)
